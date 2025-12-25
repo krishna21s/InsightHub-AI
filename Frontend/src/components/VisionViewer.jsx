@@ -14,6 +14,7 @@ import {
 import html2canvas from "html2canvas";
 import { useAppStore } from "@/store/useAppStore";
 import { askVisionTutor } from "@/lib/visionApi";
+import { PdfPageView } from "@/components/PdfPageView";
 
 export const VisionViewer = () => {
   const {
@@ -77,7 +78,6 @@ export const VisionViewer = () => {
   };
 
   const startVoiceAndAsk = async () => {
-    // Force selection (backend requires at least 1)
     if (!selectedDocIds || selectedDocIds.length < 1) {
       setShowDocumentSelector(true);
       return;
@@ -106,7 +106,6 @@ export const VisionViewer = () => {
       setTranscript(text);
 
       setVoiceState("processing");
-
       try {
         const blob = await takeScreenshotBlob();
         if (!blob) throw new Error("Failed to create screenshot blob");
@@ -121,7 +120,6 @@ export const VisionViewer = () => {
         setAiResponse(answer);
         setVoiceState("speaking");
 
-        // Optional: browser TTS
         try {
           if ("speechSynthesis" in window && answer) {
             stopSpeaking();
@@ -157,7 +155,6 @@ export const VisionViewer = () => {
     };
 
     recog.onend = () => {
-      // if user cancels before result
       if (voiceState === "listening") setVoiceState("idle");
     };
 
@@ -165,10 +162,6 @@ export const VisionViewer = () => {
   };
 
   const handleMicToggle = () => {
-    // Complete mic behavior:
-    // - listening/processing: stop recognition
-    // - speaking: stop TTS
-    // - idle: start new ask
     if (voiceState === "listening" || voiceState === "processing") {
       stopRecognition();
       setVoiceState("idle");
@@ -286,37 +279,44 @@ export const VisionViewer = () => {
         <div className="w-full max-w-4xl" style={{ minHeight: 600 }}>
           <div
             ref={viewerRef}
-            className="bg-card rounded-2xl shadow-glow border border-border p-12 w-full flex items-center justify-center"
+            className="bg-card rounded-2xl shadow-glow border border-border p-6 w-full flex items-center justify-center"
           >
-            {/* apply zoom on inner wrapper so layout/hitboxes stay stable */}
             <div
               style={{
                 transform: `scale(${zoom / 100})`,
                 transformOrigin: "top center",
               }}
-              className="w-full"
+              className="w-full flex justify-center"
             >
-              <div className="text-center space-y-6">
-                <div className="text-8xl text-muted-foreground/30">
-                  {activeDocument.type === "pdf"
-                    ? "📄"
-                    : activeDocument.type === "ppt"
-                    ? "📊"
-                    : "📝"}
+              {activeDocument?.type === "pdf" && activeDocument?.file ? (
+                <div className="w-full flex justify-center">
+                  <PdfPageView
+                    file={activeDocument.file}
+                    pageNumber={currentPage}
+                  />
                 </div>
-                <div>
-                  <p className="text-2xl font-semibold text-foreground mb-2">
-                    Page {currentPage}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Scroll through the document to find content with questions
-                  </p>
+              ) : (
+                <div className="text-center space-y-6 py-10">
+                  <div className="text-8xl text-muted-foreground/30">
+                    {activeDocument?.type === "ppt"
+                      ? "📊"
+                      : activeDocument?.type === "doc"
+                      ? "📝"
+                      : "📄"}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-semibold text-foreground mb-2">
+                      Page {currentPage}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Preview is available for PDFs only right now. (Vision
+                      Tutor still works.)
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-
-          {/* NOTE: later when you render real PDF pages here, keep viewerRef wrapping that */}
         </div>
       </div>
 
@@ -361,13 +361,6 @@ export const VisionViewer = () => {
         className={`fixed bottom-8 right-8 p-5 rounded-full text-white shadow-2xl transition-all duration-300 ${getVoiceButtonStyle()}`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        title={
-          voiceState === "listening" || voiceState === "processing"
-            ? "Stop listening"
-            : voiceState === "speaking"
-            ? "Stop speaking"
-            : "Ask using voice"
-        }
       >
         {getVoiceIcon()}
       </motion.button>

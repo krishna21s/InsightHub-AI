@@ -11,18 +11,33 @@ export const DocumentUpload = () => {
   const handleFiles = useCallback(
     async (files) => {
       try {
-        const result = await uploadVisionDocuments(files);
+        const fileArr = Array.from(files);
+        const result = await uploadVisionDocuments(fileArr);
 
-        // Backend returns: { session_id, documents: [{doc_id, filename, doc_type, page_count}] }
+        // Map backend returned docs to local File objects by filename
+        const fileByName = new Map(fileArr.map((f) => [f.name, f]));
+
         result.documents.forEach((d) => {
+          let localFile = fileByName.get(d.filename);
+
+          // fallback: try to match loosely (handles weird paths or duplicates)
+          if (!localFile) {
+            localFile = fileArr.find((f) => f.name === d.filename) || null;
+          }
+
           addDocument({
-            id: d.doc_id, // IMPORTANT: backend doc id
+            id: d.doc_id, // backend doc id
             name: d.filename,
-            type: d.doc_type === "pptx" ? "ppt" : d.doc_type, // keep UI types consistent
+            type: d.doc_type === "pptx" ? "ppt" : d.doc_type,
             pageCount: d.page_count,
             uploadedAt: new Date(),
-            size: "", // optional: you can compute from local File if needed
-            hasDiagrams: true, // optional heuristic; keep UI highlight
+            size: localFile
+              ? `${(localFile.size / 1024 / 1024).toFixed(1)} MB`
+              : "",
+            hasDiagrams: true,
+
+            // ✅ required for PDF preview
+            file: localFile || null,
           });
         });
       } catch (e) {
