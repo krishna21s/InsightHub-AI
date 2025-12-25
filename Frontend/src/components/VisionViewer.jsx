@@ -33,6 +33,7 @@ export const VisionViewer = () => {
 
   const viewerRef = useRef(null);
   const recognitionRef = useRef(null);
+  const utterRef = useRef(null);
 
   if (!activeDocument) return null;
 
@@ -46,7 +47,12 @@ export const VisionViewer = () => {
 
   const stopRecognition = () => {
     try {
-      if (recognitionRef.current) recognitionRef.current.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+      }
     } catch {}
     recognitionRef.current = null;
   };
@@ -55,20 +61,24 @@ export const VisionViewer = () => {
     try {
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     } catch {}
+    utterRef.current = null;
   };
 
   const takeScreenshotBlob = async () => {
     if (!viewerRef.current) throw new Error("Viewer element not found");
+
     const canvas = await html2canvas(viewerRef.current, {
       useCORS: true,
       backgroundColor: null,
       scale: 2,
     });
+
     return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   };
 
   const startVoiceAndAsk = async () => {
-    if (selectedDocIds.length < 1) {
+    // Force selection (backend requires at least 1)
+    if (!selectedDocIds || selectedDocIds.length < 1) {
       setShowDocumentSelector(true);
       return;
     }
@@ -96,6 +106,7 @@ export const VisionViewer = () => {
       setTranscript(text);
 
       setVoiceState("processing");
+
       try {
         const blob = await takeScreenshotBlob();
         if (!blob) throw new Error("Failed to create screenshot blob");
@@ -106,16 +117,26 @@ export const VisionViewer = () => {
           selectedDocIds,
         });
 
-        const answer = result.answer || "";
+        const answer = result?.answer || "";
         setAiResponse(answer);
         setVoiceState("speaking");
 
+        // Optional: browser TTS
         try {
           if ("speechSynthesis" in window && answer) {
-            window.speechSynthesis.cancel();
+            stopSpeaking();
             const utter = new SpeechSynthesisUtterance(answer);
-            utter.onend = () => setVoiceState("idle");
-            utter.onerror = () => setVoiceState("idle");
+            utterRef.current = utter;
+
+            utter.onend = () => {
+              utterRef.current = null;
+              setVoiceState("idle");
+            };
+            utter.onerror = () => {
+              utterRef.current = null;
+              setVoiceState("idle");
+            };
+
             window.speechSynthesis.speak(utter);
           } else {
             setVoiceState("idle");
@@ -125,7 +146,7 @@ export const VisionViewer = () => {
         }
       } catch (e) {
         console.error(e);
-        setAiResponse(`Error: ${e.message}`);
+        setAiResponse(`Error: ${e?.message || "Unknown error"}`);
         setVoiceState("idle");
       }
     };
@@ -136,6 +157,7 @@ export const VisionViewer = () => {
     };
 
     recog.onend = () => {
+      // if user cancels before result
       if (voiceState === "listening") setVoiceState("idle");
     };
 
@@ -143,7 +165,10 @@ export const VisionViewer = () => {
   };
 
   const handleMicToggle = () => {
-    // Make mic button complete:
+    // Complete mic behavior:
+    // - listening/processing: stop recognition
+    // - speaking: stop TTS
+    // - idle: start new ask
     if (voiceState === "listening" || voiceState === "processing") {
       stopRecognition();
       setVoiceState("idle");
@@ -220,24 +245,28 @@ export const VisionViewer = () => {
             <button
               className="p-2 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-smooth"
               onClick={() => setZoom((z) => Math.max(50, z - 25))}
+              title="Zoom out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
+
             <span className="text-sm text-muted-foreground w-14 text-center">
               {zoom}%
             </span>
+
             <button
               className="p-2 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-smooth"
               onClick={() => setZoom((z) => Math.min(200, z + 25))}
+              title="Zoom in"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
           </div>
 
-          {/* ✅ FIX: maximize now works */}
           <button
             onClick={() => setIsMaximized((v) => !v)}
             className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-smooth"
+            title={isMaximized ? "Exit full screen" : "Full screen"}
           >
             <Maximize2 className="w-5 h-5" />
           </button>
@@ -245,6 +274,7 @@ export const VisionViewer = () => {
           <button
             onClick={handleClose}
             className="p-2 rounded-lg hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-smooth"
+            title="Close Vision"
           >
             <X className="w-5 h-5" />
           </button>
@@ -258,7 +288,7 @@ export const VisionViewer = () => {
             ref={viewerRef}
             className="bg-card rounded-2xl shadow-glow border border-border p-12 w-full flex items-center justify-center"
           >
-            {/* ✅ FIX: apply zoom inside so layout/click targets stay correct */}
+            {/* apply zoom on inner wrapper so layout/hitboxes stay stable */}
             <div
               style={{
                 transform: `scale(${zoom / 100})`,
@@ -285,6 +315,8 @@ export const VisionViewer = () => {
               </div>
             </div>
           </div>
+
+          {/* NOTE: later when you render real PDF pages here, keep viewerRef wrapping that */}
         </div>
       </div>
 
@@ -294,6 +326,7 @@ export const VisionViewer = () => {
           className="p-3 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 transition-smooth"
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
+          title="Previous page"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -316,6 +349,7 @@ export const VisionViewer = () => {
           className="p-3 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 transition-smooth"
           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage >= totalPages}
+          title="Next page"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -327,6 +361,13 @@ export const VisionViewer = () => {
         className={`fixed bottom-8 right-8 p-5 rounded-full text-white shadow-2xl transition-all duration-300 ${getVoiceButtonStyle()}`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        title={
+          voiceState === "listening" || voiceState === "processing"
+            ? "Stop listening"
+            : voiceState === "speaking"
+            ? "Stop speaking"
+            : "Ask using voice"
+        }
       >
         {getVoiceIcon()}
       </motion.button>
