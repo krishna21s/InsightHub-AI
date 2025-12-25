@@ -23,12 +23,16 @@ export const VisionViewer = () => {
     selectedDocIds,
     setShowDocumentSelector,
   } = useAppStore();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [voiceState, setVoiceState] = useState("idle"); // idle | listening | processing | speaking
   const [transcript, setTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
+  const [isMaximized, setIsMaximized] = useState(false);
+
   const viewerRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   if (!activeDocument) return null;
 
@@ -39,6 +43,19 @@ export const VisionViewer = () => {
     []
   );
   const speechSupported = !!SpeechRecognition;
+
+  const stopRecognition = () => {
+    try {
+      if (recognitionRef.current) recognitionRef.current.stop();
+    } catch {}
+    recognitionRef.current = null;
+  };
+
+  const stopSpeaking = () => {
+    try {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    } catch {}
+  };
 
   const takeScreenshotBlob = async () => {
     if (!viewerRef.current) throw new Error("Viewer element not found");
@@ -68,6 +85,8 @@ export const VisionViewer = () => {
     setAiResponse("");
 
     const recog = new SpeechRecognition();
+    recognitionRef.current = recog;
+
     recog.lang = "en-US";
     recog.interimResults = false;
     recog.maxAlternatives = 1;
@@ -87,17 +106,17 @@ export const VisionViewer = () => {
           selectedDocIds,
         });
 
-        setAiResponse(result.answer || "");
+        const answer = result.answer || "";
+        setAiResponse(answer);
         setVoiceState("speaking");
 
-        // (Optional) Use browser TTS to speak response
         try {
-          if ("speechSynthesis" in window) {
-            const utter = new SpeechSynthesisUtterance(result.answer || "");
+          if ("speechSynthesis" in window && answer) {
             window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
+            const utter = new SpeechSynthesisUtterance(answer);
             utter.onend = () => setVoiceState("idle");
             utter.onerror = () => setVoiceState("idle");
+            window.speechSynthesis.speak(utter);
           } else {
             setVoiceState("idle");
           }
@@ -117,7 +136,6 @@ export const VisionViewer = () => {
     };
 
     recog.onend = () => {
-      // if user cancels before result
       if (voiceState === "listening") setVoiceState("idle");
     };
 
@@ -125,10 +143,23 @@ export const VisionViewer = () => {
   };
 
   const handleMicToggle = () => {
-    if (voiceState === "idle") startVoiceAndAsk();
+    // Make mic button complete:
+    if (voiceState === "listening" || voiceState === "processing") {
+      stopRecognition();
+      setVoiceState("idle");
+      return;
+    }
+    if (voiceState === "speaking") {
+      stopSpeaking();
+      setVoiceState("idle");
+      return;
+    }
+    startVoiceAndAsk();
   };
 
   const handleClose = () => {
+    stopRecognition();
+    stopSpeaking();
     setVisionActive(false);
     setActiveDocument(null);
   };
@@ -159,9 +190,13 @@ export const VisionViewer = () => {
     }
   };
 
+  const containerClass = isMaximized
+    ? "fixed inset-0 z-50 flex flex-col h-screen w-screen bg-background"
+    : "flex flex-col h-full w-full bg-background";
+
   return (
     <motion.div
-      className="flex flex-col h-full w-full bg-background"
+      className={containerClass}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -184,7 +219,7 @@ export const VisionViewer = () => {
           <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
             <button
               className="p-2 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-smooth"
-              onClick={() => setZoom(Math.max(50, zoom - 25))}
+              onClick={() => setZoom((z) => Math.max(50, z - 25))}
             >
               <ZoomOut className="w-4 h-4" />
             </button>
@@ -193,14 +228,20 @@ export const VisionViewer = () => {
             </span>
             <button
               className="p-2 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-smooth"
-              onClick={() => setZoom(Math.min(200, zoom + 25))}
+              onClick={() => setZoom((z) => Math.min(200, z + 25))}
             >
               <ZoomIn className="w-4 h-4" />
             </button>
           </div>
-          <button className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-smooth">
+
+          {/* ✅ FIX: maximize now works */}
+          <button
+            onClick={() => setIsMaximized((v) => !v)}
+            className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-smooth"
+          >
             <Maximize2 className="w-5 h-5" />
           </button>
+
           <button
             onClick={handleClose}
             className="p-2 rounded-lg hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-smooth"
@@ -212,29 +253,36 @@ export const VisionViewer = () => {
 
       {/* Document Display (screenshot target) */}
       <div className="flex-1 overflow-auto p-8 flex items-start justify-center">
-        <div
-          ref={viewerRef}
-          className="bg-card rounded-2xl shadow-glow border border-border p-12 min-h-[600px] w-full max-w-4xl flex items-center justify-center"
-          style={{
-            transform: `scale(${zoom / 100})`,
-            transformOrigin: "top center",
-          }}
-        >
-          <div className="text-center space-y-6">
-            <div className="text-8xl text-muted-foreground/30">
-              {activeDocument.type === "pdf"
-                ? "📄"
-                : activeDocument.type === "ppt"
-                ? "📊"
-                : "📝"}
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-foreground mb-2">
-                Page {currentPage}
-              </p>
-              <p className="text-muted-foreground">
-                Scroll through the document to find content with questions
-              </p>
+        <div className="w-full max-w-4xl" style={{ minHeight: 600 }}>
+          <div
+            ref={viewerRef}
+            className="bg-card rounded-2xl shadow-glow border border-border p-12 w-full flex items-center justify-center"
+          >
+            {/* ✅ FIX: apply zoom inside so layout/click targets stay correct */}
+            <div
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: "top center",
+              }}
+              className="w-full"
+            >
+              <div className="text-center space-y-6">
+                <div className="text-8xl text-muted-foreground/30">
+                  {activeDocument.type === "pdf"
+                    ? "📄"
+                    : activeDocument.type === "ppt"
+                    ? "📊"
+                    : "📝"}
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-foreground mb-2">
+                    Page {currentPage}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Scroll through the document to find content with questions
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -244,7 +292,7 @@ export const VisionViewer = () => {
       <div className="flex items-center justify-center gap-6 p-4 border-t border-border bg-card">
         <button
           className="p-3 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 transition-smooth"
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -256,7 +304,8 @@ export const VisionViewer = () => {
             value={currentPage}
             onChange={(e) => {
               const val = parseInt(e.target.value);
-              if (val >= 1 && val <= totalPages) setCurrentPage(val);
+              if (!Number.isNaN(val) && val >= 1 && val <= totalPages)
+                setCurrentPage(val);
             }}
             className="w-16 text-center bg-secondary border border-border rounded-lg px-3 py-2 text-foreground"
           />
@@ -265,7 +314,7 @@ export const VisionViewer = () => {
 
         <button
           className="p-3 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 transition-smooth"
-          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage >= totalPages}
         >
           <ChevronRight className="w-5 h-5" />

@@ -10,13 +10,24 @@ export const DocumentSelector = () => {
     documents,
     selectedDocIds,
     toggleSelectedDocId,
+    setActiveDocument,
   } = useAppStore();
 
   if (!showDocumentSelector) return null;
 
-  const handleClose = () => setShowDocumentSelector(false);
+  // ✅ A-mode: force at least 1 selection if there are documents
+  const canClose = documents.length === 0 || selectedDocIds.length >= 1;
 
-  const canConfirm = selectedDocIds.length >= 1;
+  const handleClose = () => {
+    if (!canClose) return; // block closing
+    setShowDocumentSelector(false);
+
+    // optional: set an activeDocument for VisionViewer display
+    if (selectedDocIds.length >= 1) {
+      const first = documents.find((d) => d.id === selectedDocIds[0]);
+      if (first) setActiveDocument(first);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -47,11 +58,23 @@ export const DocumentSelector = () => {
                 <p className="text-sm text-muted-foreground">
                   Choose one or more documents to analyze
                 </p>
+                {!canClose && (
+                  <p className="text-xs text-amber-400 mt-1">
+                    Select at least 1 document to continue.
+                  </p>
+                )}
               </div>
             </div>
+
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-smooth"
+              className={`p-2 rounded-lg transition-smooth ${
+                canClose
+                  ? "hover:bg-secondary text-muted-foreground hover:text-foreground"
+                  : "opacity-40 cursor-not-allowed text-muted-foreground"
+              }`}
+              disabled={!canClose}
+              title={!canClose ? "Select at least one document" : "Close"}
             >
               <X className="w-5 h-5" />
             </button>
@@ -96,22 +119,18 @@ export const DocumentSelector = () => {
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-border bg-secondary/30 space-y-2">
+          <div className="p-4 border-t border-border bg-secondary/30">
             <button
-              disabled={!canConfirm}
               onClick={handleClose}
+              disabled={!canClose}
               className={`w-full py-2 rounded-lg text-sm transition-smooth ${
-                canConfirm
+                canClose
                   ? "bg-glow-vision/20 text-glow-vision border border-glow-vision/30 hover:bg-glow-vision/30"
                   : "bg-secondary text-muted-foreground opacity-60 cursor-not-allowed"
               }`}
             >
               Confirm ({selectedDocIds.length} selected)
             </button>
-            <p className="text-xs text-muted-foreground text-center">
-              Vision Tutor will analyze visual content in your selected
-              documents
-            </p>
           </div>
         </motion.div>
       </motion.div>
