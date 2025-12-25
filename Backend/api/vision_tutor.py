@@ -1,8 +1,13 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+
+from services.context_selector import match_pages_by_screenshot
+from services.doc_extract import DocumentExtractionError, extract_pages
+from services.session_store import SESSION_STORE
+from services.vision_model import VisionModelError, ask_vision_model
 
 router = APIRouter()
 
@@ -23,44 +28,76 @@ async def upload_documents(
     ),
 ):
     """
-    Upload multiple documents for a session and (later) extract per-page/slide text.
+    Upload multiple documents for a session.
 
-    NOTE: This is scaffolding only. Next step we’ll:
-      - validate file types
-      - extract text per page/slide/chunk
-      - store in a session store (in-memory with TTL)
+    - Extract text per page (PDF) / slide (PPTX) / chunk (DOCX)
+    - Store temporarily in SESSION_STORE for that session
+    - Return doc metadata for UI selection
     """
-    if not session_id.strip():
+    if not session_id or not session_id.strip():
         raise HTTPException(status_code=400, detail="Missing session_id")
 
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
 
-    # For now, just echo metadata (we'll replace with real ingestion next)
-    docs = []
+    uploaded_docs = []
+
     for f in files:
-        docs.append(
+        filename = f.filename or "uploaded"
+        content = await f.read()
+
+        if not content:
+            raise HTTPException(status_code=400, detail=f"Empty file: {filename}")
+
+        try:
+            doc_type, pages = extract_pages(filename=filename, content=content)
+        except DocumentExtractionError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+
+        # MVP doc_id (stable per session). If you want true uniqueness later, swap to uuid.
+        doc_id = f"{session_id}:{filename}"
+
+        SESSION_STORE.upsert_document(
+            session_id=session_id,
+            doc_id=doc_id,
+            filename=filename,
+            doc_type=doc_type,
+            pages=pages,
+        )
+
+        uploaded_docs.append(
             {
-                "doc_id": f"{session_id}:{f.filename}",
-                "filename": f.filename,
-                "content_type": f.content_type,
+                "doc_id": doc_id,
+                "filename": filename,
+                "doc_type": doc_type,
+                "page_count": len(pages),
             }
         )
 
-    return {"session_id": session_id, "documents": docs}
+    return {"session_id": session_id, "documents": uploaded_docs}
 
 
 @router.get("/session/{session_id}/documents")
 def list_documents(session_id: str):
     """
-    List documents uploaded for this session.
-
-    NOTE: This is scaffolding only. Next step we’ll pull from session store.
+    List uploaded documents for a session (for the UI document selector).
     """
-    if not session_id.strip():
+    if not session_id or not session_id.strip():
         raise HTTPException(status_code=400, detail="Missing session_id")
 
-    return {"session_id": session_id, "documents": []}
+    docs = SESSION_STORE.list_documents(session_id)
+    return {
+        "session_id": session_id,
+        "documents": [
+            {
+                "doc_id": d.doc_id,
+                "filename": d.filename,
+                "doc_type": d.doc_type,
+                "page_count": len(d.pages),
+            }
+            for d in docs
+        ],
+    }
 
 
 @router.post("/session/{session_id}/ask")
@@ -71,35 +108,73 @@ async def vision_ask(
     image: UploadFile = File(..., description="Screenshot image"),
 ):
     """
-    Main Vision Tutor endpoint (multipart-first):
-      - query: user question
-      - selected_doc_ids: user-selected docs (min 1)
-      - image: screenshot (required)
-
-    Next step we’ll:
-      - load extracted text for selected docs from session store
-      - OCR screenshot (optional) + select best matching pages
-      - call unified Ollama/Qwen endpoint (same as your previous project)
+    Vision Tutor ask endpoint (multipart):
+      - Requires: query + screenshot + selected_doc_ids (>=1)
+      - OCR screenshot to locate best matching page text from selected documents
+      - Calls unified vision model with screenshot + query + matched text context
     """
-    if not session_id.strip():
+    if not session_id or not session_id.strip():
         raise HTTPException(status_code=400, detail="Missing session_id")
 
-    if not query.strip():
+    if not query or not query.strip():
         raise HTTPException(status_code=400, detail="Missing query")
 
     selected_doc_ids = [d for d in (selected_doc_ids or []) if d and d.strip()]
     if len(selected_doc_ids) < 1:
         raise HTTPException(status_code=400, detail="Select at least one document")
 
-    if not image:
-        raise HTTPException(status_code=400, detail="Missing screenshot image")
+    selected_docs = SESSION_STORE.get_documents(
+        session_id=session_id, doc_ids=selected_doc_ids
+    )
+    if len(selected_docs) < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Selected documents not found in this session. Upload documents first.",
+        )
+
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Empty screenshot image")
+
+    # Build best page context using OCR + overlap scoring (text-only context)
+    context_text = None
+    matched_pages = []
+    try:
+        ctx, matches = match_pages_by_screenshot(
+            image_bytes=image_bytes,
+            selected_docs=selected_docs,
+            top_k=4,
+        )
+        context_text = ctx if ctx.strip() else None
+        matched_pages = matches
+    except Exception:
+        # OCR not available / failed -> still answer via vision model without extra context
+        context_text = None
+        matched_pages = []
+
+    try:
+        model_result = ask_vision_model(
+            query=query,
+            image_bytes=image_bytes,
+            context_text=context_text,
+        )
+    except VisionModelError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
 
     return {
         "session_id": session_id,
         "query": query,
         "selected_doc_ids": selected_doc_ids,
-        "image_received": True,
-        "answer": "Scaffold: vision model call not wired yet.",
+        "answer": model_result["answer"],
+        "matched_pages": [
+            {
+                "doc_id": m.doc_id,
+                "filename": m.filename,
+                "page_index": m.page_index,
+                "score": m.score,
+            }
+            for m in matched_pages
+        ],
     }
 
 
@@ -107,9 +182,9 @@ async def vision_ask(
 def delete_session(session_id: str):
     """
     Delete the session and its temporary stored documents/text.
-
-    NOTE: Scaffold; will delete from session store next.
     """
-    if not session_id.strip():
+    if not session_id or not session_id.strip():
         raise HTTPException(status_code=400, detail="Missing session_id")
-    return {"session_id": session_id, "deleted": True}
+
+    deleted = SESSION_STORE.delete(session_id)
+    return {"session_id": session_id, "deleted": deleted}
