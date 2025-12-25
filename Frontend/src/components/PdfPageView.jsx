@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
-// ✅ Vite + react-pdf safest worker setup (prevents API/worker mismatch)
+// ✅ Correct Vite + react-pdf worker (prevents API/worker mismatch)
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url

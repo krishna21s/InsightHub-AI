@@ -30,15 +30,19 @@ export const VisionViewer = () => {
   const [voiceState, setVoiceState] = useState("idle"); // idle | listening | processing | speaking
   const [transcript, setTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const viewerRef = useRef(null);
+  // key to force re-mount (react-pdf recalculates canvas size on mount)
+  const [pdfRenderKey, setPdfRenderKey] = useState(0);
+
+  const rootRef = useRef(null); // fullscreen target
+  const viewerRef = useRef(null); // screenshot target
   const recognitionRef = useRef(null);
   const utterRef = useRef(null);
 
   if (!activeDocument) return null;
 
-  const totalPages = activeDocument.pageCount;
+  const totalPages = Math.max(1, Number(activeDocument.pageCount || 1));
 
   const SpeechRecognition = useMemo(
     () => window.SpeechRecognition || window.webkitSpeechRecognition,
@@ -178,8 +182,34 @@ export const VisionViewer = () => {
   const handleClose = () => {
     stopRecognition();
     stopSpeaking();
+
+    // exit browser fullscreen if active
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+    } catch {}
+
+    // Keep the active document so the main layout (sidebar/chat + document viewer) stays visible.
     setVisionActive(false);
-    setActiveDocument(null);
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      const el = rootRef.current;
+      if (!el) return;
+
+      if (!document.fullscreenElement) {
+        await el.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+
+      // Force react-pdf to remount so it recalculates size for the new viewport
+      setTimeout(() => setPdfRenderKey((k) => k + 1), 50);
+    } catch (e) {
+      console.error("Fullscreen failed:", e);
+    }
   };
 
   const getVoiceButtonStyle = () => {
@@ -208,16 +238,16 @@ export const VisionViewer = () => {
     }
   };
 
-  const containerClass = isMaximized
-    ? "fixed inset-0 z-50 flex flex-col h-screen w-screen bg-background"
-    : "flex flex-col h-full w-full bg-background";
-
   return (
     <motion.div
-      className={containerClass}
+      ref={rootRef}
+      className="flex flex-col h-screen w-full bg-background"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      // keep focus/clicks in fullscreen mode
+      style={{ outline: "none" }}
+      tabIndex={-1}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-card">
@@ -256,10 +286,11 @@ export const VisionViewer = () => {
             </button>
           </div>
 
+          {/* ✅ REAL fullscreen */}
           <button
-            onClick={() => setIsMaximized((v) => !v)}
+            onClick={toggleFullscreen}
             className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-smooth"
-            title={isMaximized ? "Exit full screen" : "Full screen"}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
           >
             <Maximize2 className="w-5 h-5" />
           </button>
@@ -276,7 +307,7 @@ export const VisionViewer = () => {
 
       {/* Document Display (screenshot target) */}
       <div className="flex-1 overflow-auto p-8 flex items-start justify-center">
-        <div className="w-full max-w-4xl" style={{ minHeight: 600 }}>
+        <div className="w-full max-w-5xl" style={{ minHeight: 600 }}>
           <div
             ref={viewerRef}
             className="bg-card rounded-2xl shadow-glow border border-border p-6 w-full flex items-center justify-center"
@@ -290,10 +321,12 @@ export const VisionViewer = () => {
             >
               {activeDocument?.type === "pdf" && activeDocument?.file ? (
                 <div className="w-full flex justify-center">
-                  <PdfPageView
-                    file={activeDocument.file}
-                    pageNumber={currentPage}
-                  />
+                  <div key={pdfRenderKey}>
+                    <PdfPageView
+                      file={activeDocument.file}
+                      pageNumber={currentPage}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="text-center space-y-6 py-10">
