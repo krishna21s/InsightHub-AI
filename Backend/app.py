@@ -3,11 +3,15 @@ from __future__ import annotations
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import find_dotenv, load_dotenv
 
 from api.vision_tutor import router as vision_router
 
 
 def create_app() -> FastAPI:
+    # Load environment variables from a local .env file if present (dev-friendly)
+    load_dotenv(find_dotenv())
+
     app = FastAPI(
         title="InsightHub-AI Backend",
         version="0.1.0",
