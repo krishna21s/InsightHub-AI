@@ -188,5 +188,3 @@ def delete_session(session_id: str):
 
     deleted = SESSION_STORE.delete(session_id)
     return {"session_id": session_id, "deleted": deleted}
-
-

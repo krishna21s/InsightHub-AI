@@ -38,6 +38,15 @@ export const useAppStore = create((set) => ({
   activeMode: null,
   setActiveMode: (mode) => set({ activeMode: mode }),
 
+  // Mode Processing Results
+  modeResults: null,
+  setModeResults: (results) => set({ modeResults: results }),
+  clearModeResults: () => set({ modeResults: null }),
+
+  // Processing state
+  isProcessingMode: false,
+  setProcessingMode: (processing) => set({ isProcessingMode: processing }),
+
   // Vision Mode
   isVisionActive: false,
   setVisionActive: (active) => set({ isVisionActive: active }),

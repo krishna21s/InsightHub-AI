@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import find_dotenv, load_dotenv
 
 from api.vision_tutor import router as vision_router
+from api.modes_api import router as modes_router
 
 
 def create_app() -> FastAPI:
@@ -40,6 +41,9 @@ def create_app() -> FastAPI:
 
     # Vision Tutor
     app.include_router(vision_router, prefix="/vision", tags=["vision-tutor"])
+
+    # Learning Modes
+    app.include_router(modes_router, prefix="/modes", tags=["learning-modes"])
 
     return app
 

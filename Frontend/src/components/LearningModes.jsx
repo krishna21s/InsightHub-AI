@@ -2,6 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, BookOpen, FileQuestion, RotateCcw, Wrench, Eye } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { getOrCreateSessionId } from '@/lib/visionApi';
+import { fetchChatModeSummaries } from '@/lib/modesApi';
+
 const modes = [
     {
         id: 'student',
@@ -47,6 +50,7 @@ const modes = [
         highlightOnDiagrams: true,
     },
 ];
+
 const getIcon = (icon) => {
     switch (icon) {
         case 'graduation': return GraduationCap;
@@ -58,10 +62,179 @@ const getIcon = (icon) => {
         default: return BookOpen;
     }
 };
+
 export const LearningModes = () => {
-    const { documents, activeMode, setActiveMode, isVisionActive, setVisionActive, setShowDocumentSelector } = useAppStore();
+    const { 
+        documents, 
+        activeMode, 
+        setActiveMode, 
+        isVisionActive, 
+        setVisionActive, 
+        setShowDocumentSelector,
+        setProcessingMode,
+        setModeResults,
+        addMessage,
+    } = useAppStore();
+    
     const hasDocuments = documents.length > 0;
     const hasDiagrams = documents.some(d => d.hasDiagrams);
+
+    const processMode = async (modeId) => {
+        try {
+            setProcessingMode(true);
+            
+            // Fresh session per tab (sessionStorage) so refresh starts clean
+            const sessionId = getOrCreateSessionId();
+            console.log('Processing mode:', modeId, 'with session ID:', sessionId);
+            
+            if (!sessionId) {
+                addMessage({
+                    id: `msg-${Date.now()}`,
+                    role: 'assistant',
+                    content: 'Please upload documents first before selecting a learning mode.',
+                    timestamp: new Date(),
+                });
+                setProcessingMode(false);
+                return;
+            }
+
+            const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+            
+            // Add user message
+            addMessage({
+                id: `msg-${Date.now()}`,
+                role: 'user',
+                content: `Process documents in ${modeId} mode`,
+                timestamp: new Date(),
+            });
+
+            // Call the process-mode API
+            const formData = new FormData();
+            formData.append('mode', modeId);
+            formData.append('session_id', sessionId);
+            
+            console.log('Calling API:', `${API_BASE}/modes/process-mode`);
+
+            const response = await fetch(`${API_BASE}/modes/process-mode`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                let errorMsg = response.statusText;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMsg = errorJson.detail || errorMsg;
+                } catch {
+                    errorMsg = errorText || errorMsg;
+                }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            console.log('Mode processing result:', data);
+            setModeResults(data);
+
+            // Also pull chat-mode summaries for the current session (non-vision modes only)
+            let chatSummariesText = '';
+            try {
+                const chatSummaries = await fetchChatModeSummaries({ sessionId });
+                chatSummariesText = formatChatModeSummaries(chatSummaries);
+            } catch (chatErr) {
+                console.error('Chat-mode summary error:', chatErr);
+                chatSummariesText = `\nChat summaries unavailable: ${chatErr.message}`;
+            }
+
+            // Add AI response message with the results
+            const resultMessage = formatModeResults(data, modeId) + chatSummariesText;
+            addMessage({
+                id: `msg-${Date.now() + 1}`,
+                role: 'assistant',
+                content: resultMessage,
+                timestamp: new Date(),
+                modeResults: data,
+            });
+
+        } catch (error) {
+            console.error('Error processing mode:', error);
+            addMessage({
+                id: `msg-${Date.now() + 1}`,
+                role: 'assistant',
+                content: `Error processing ${modeId} mode: ${error.message}`,
+                timestamp: new Date(),
+            });
+        } finally {
+            setProcessingMode(false);
+        }
+    };
+
+    const formatModeResults = (data, mode) => {
+        if (!data.results || data.results.length === 0) {
+            return "No results found. Please upload documents first.";
+        }
+
+        let message = `**${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode Analysis**\n\n`;
+        
+        data.results.forEach((result, idx) => {
+            message += `**Document ${idx + 1}: ${result.filename}**\n\n`;
+            
+            if (result.mode_explanation) {
+                const explanation = result.mode_explanation;
+                message += `${explanation.summary}\n\n`;
+                
+                if (explanation.learning_points) {
+                    message += `**Key Learning Points:**\n`;
+                    explanation.learning_points.forEach((point, i) => {
+                        message += `${i + 1}. ${point}\n`;
+                    });
+                    message += '\n';
+                }
+                
+                if (explanation.practice_questions) {
+                    message += `**Practice Questions:**\n`;
+                    explanation.practice_questions.forEach((q, i) => {
+                        message += `${i + 1}. ${q}\n`;
+                    });
+                    message += '\n';
+                }
+                
+                if (explanation.key_points) {
+                    message += `**Quick Points:**\n`;
+                    explanation.key_points.forEach((point, i) => {
+                        message += `✓ ${point}\n`;
+                    });
+                    message += '\n';
+                }
+            }
+            
+            if (result.vision_analyses && result.vision_analyses.length > 0) {
+                message += `\n**📊 Visual Analysis:**\n`;
+                result.vision_analyses.forEach((analysis, i) => {
+                    message += `\nImage ${i + 1} (Page ${analysis.page_index + 1}):\n${analysis.analysis}\n`;
+                });
+            }
+            
+            message += '\n---\n\n';
+        });
+
+        return message;
+    };
+
+    const formatChatModeSummaries = (chatData) => {
+        if (!chatData || !chatData.summaries || chatData.summaries.length === 0) {
+            return '';
+        }
+
+        let block = '**Chat Mode Summaries**\n\n';
+        chatData.summaries.forEach((s) => {
+            const bullets = (s.bullets || []).join('\n');
+            block += `• ${s.filename} (Pages: ${s.page_count})\n${bullets}\n\n`;
+        });
+        return block;
+    };
+
     const handleModeClick = (mode) => {
         if (mode.id === 'vision') {
             if (isVisionActive) {
@@ -77,12 +250,23 @@ export const LearningModes = () => {
             }
         }
         else {
-            if (!hasDocuments)
-                return;
-            setActiveMode(activeMode === mode.id ? null : mode.id);
-            setVisionActive(false);
+            if (!hasDocuments) return;
+            
+            const isCurrentlyActive = activeMode === mode.id;
+            
+            if (isCurrentlyActive) {
+                // Deactivate mode
+                setActiveMode(null);
+                setVisionActive(false);
+            } else {
+                // Activate mode and process documents
+                setActiveMode(mode.id);
+                setVisionActive(false);
+                processMode(mode.id);
+            }
         }
     };
+
     return (<div className="space-y-3">
       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Learning Modes

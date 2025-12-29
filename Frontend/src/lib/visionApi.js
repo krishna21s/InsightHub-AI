@@ -1,11 +1,27 @@
-const DEFAULT_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
+const DEFAULT_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://127.0.0.1:8000";
 
 export function getOrCreateSessionId() {
   const key = "insighthub_vision_session_id";
-  let sid = localStorage.getItem(key);
+
+  // Always create a fresh session per browser tab (sessionStorage)
+  // This prevents stale documents from previous refreshes.
+  // Cleanup any older localStorage key if it exists.
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem(key);
+  }
+
+  let sid =
+    typeof sessionStorage !== "undefined" ? sessionStorage.getItem(key) : null;
   if (!sid) {
-    sid = (crypto?.randomUUID?.() || `sid-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-    localStorage.setItem(key, sid);
+    sid =
+      crypto?.randomUUID?.() ||
+      `sid-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(key, sid);
+    }
   }
   return sid;
 }
@@ -15,10 +31,15 @@ export async function uploadVisionDocuments(files) {
   const form = new FormData();
   Array.from(files).forEach((f) => form.append("files", f));
 
-  const res = await fetch(`${DEFAULT_BASE_URL}/vision/session/${encodeURIComponent(sessionId)}/documents`, {
-    method: "POST",
-    body: form,
-  });
+  const res = await fetch(
+    `${DEFAULT_BASE_URL}/vision/session/${encodeURIComponent(
+      sessionId
+    )}/documents`,
+    {
+      method: "POST",
+      body: form,
+    }
+  );
 
   if (!res.ok) {
     const msg = await res.text();
@@ -37,10 +58,13 @@ export async function askVisionTutor({ query, imageBlob, selectedDocIds }) {
 
   form.append("image", imageBlob, "screenshot.png");
 
-  const res = await fetch(`${DEFAULT_BASE_URL}/vision/session/${encodeURIComponent(sessionId)}/ask`, {
-    method: "POST",
-    body: form,
-  });
+  const res = await fetch(
+    `${DEFAULT_BASE_URL}/vision/session/${encodeURIComponent(sessionId)}/ask`,
+    {
+      method: "POST",
+      body: form,
+    }
+  );
 
   if (!res.ok) {
     const msg = await res.text();
