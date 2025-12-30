@@ -35,7 +35,7 @@ export const DocumentSelector = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
         onClick={handleClose}
       >
         <motion.div
@@ -68,11 +68,10 @@ export const DocumentSelector = () => {
 
             <button
               onClick={handleClose}
-              className={`p-2 rounded-lg transition-smooth ${
-                canClose
+              className={`p-2 rounded-lg transition-smooth ${canClose
                   ? "hover:bg-secondary text-muted-foreground hover:text-foreground"
                   : "opacity-40 cursor-not-allowed text-muted-foreground"
-              }`}
+                }`}
               disabled={!canClose}
               title={!canClose ? "Select at least one document" : "Close"}
             >
@@ -89,10 +88,9 @@ export const DocumentSelector = () => {
                   key={doc.id}
                   onClick={() => toggleSelectedDocId(doc.id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-smooth border
-                    ${
-                      selected
-                        ? "bg-glow-vision/15 border-glow-vision/40"
-                        : "bg-secondary/50 border-transparent hover:bg-secondary hover:border-glow-vision/30"
+                    ${selected
+                      ? "bg-glow-vision/15 border-glow-vision/40"
+                      : "bg-secondary/50 border-transparent hover:bg-secondary hover:border-glow-vision/30"
                     }`}
                   whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.98 }}
@@ -123,11 +121,10 @@ export const DocumentSelector = () => {
             <button
               onClick={handleClose}
               disabled={!canClose}
-              className={`w-full py-2 rounded-lg text-sm transition-smooth ${
-                canClose
+              className={`w-full py-2 rounded-lg text-sm transition-smooth ${canClose
                   ? "bg-glow-vision/20 text-glow-vision border border-glow-vision/30 hover:bg-glow-vision/30"
                   : "bg-secondary text-muted-foreground opacity-60 cursor-not-allowed"
-              }`}
+                }`}
             >
               Confirm ({selectedDocIds.length} selected)
             </button>

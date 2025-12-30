@@ -1,207 +1,607 @@
-# InsightHub-AI
-An Intelligent Knowledge-First Educational Platform
+<div align="center">
+
+# 🧠 InsightHub-AI
+
+### *Your Intelligent Knowledge-First Educational Companion*
+
+[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.1.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+**[Features](#-core-features)** • **[Demo](#-live-demo)** • **[Quick Start](#-quick-start)** • **[Architecture](#-system-architecture)** • **[Documentation](#-documentation)**
 
 ---
 
-## Overview
+</div>
 
-InsightHub is an educational AI platform designed to help students and educators interact with their learning materials in a more natural and effective way.
+## 📖 Table of Contents
 
-Traditional learning often involves searching through PDFs, scrolling slides, or rewatching lectures just to find one answer. InsightHub solves this problem by allowing users to upload their own documents and ask questions in plain language. The system responds with accurate explanations that are directly sourced from the uploaded content.
-
-The platform is built using Retrieval-Augmented Generation (RAG) and enhanced with a Vision Tutor Mode, enabling the AI to explain diagrams, tables, and on-screen content in a way similar to a human tutor.
-
----
-
-## Problem Statement (PS-12)
-
-Educational and organizational knowledge is usually stored in PDFs, slides, wikis, or internal documents. Finding specific information inside these documents is time-consuming and inefficient.
-
-Users need a system where they can ask questions such as:
-
-“What is the AWS spending limit for this project?”
-
-and receive an instant, accurate answer with a clear reference to the original document instead of manually searching through multiple files.
+- [Overview](#-overview)
+- [The Problem](#-the-problem)
+- [Our Solution](#-our-solution)
+- [Core Features](#-core-features)
+- [System Architecture](#-system-architecture)
+- [Technology Stack](#-technology-stack)
+- [Quick Start](#-quick-start)
+- [User Workflow](#-user-workflow)
+- [Learning Modes](#-learning-modes)
+- [Practical Use Cases](#-practical-use-cases)
+- [Design Philosophy](#-design-philosophy)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
 
 ---
 
-## Solution
+## 🎯 Overview
 
-InsightHub acts as an intelligent knowledge assistant that:
+**InsightHub-AI** is an intelligent educational platform that transforms how students, educators, and self-learners interact with their learning materials. Built on **Retrieval-Augmented Generation (RAG)** technology, InsightHub provides accurate, context-aware answers directly from your uploaded documents—no hallucinations, just facts.
 
-- Understands user-uploaded documents
-- Answers questions using only the provided materials
-- Provides source-linked explanations
-- Supports conversational, follow-up learning
-- Explains visual content such as diagrams and tables
+### ✨ What Makes InsightHub Special?
 
-The system ensures accuracy by generating answers strictly from retrieved document context, not from general internet knowledge.
-
----
-
-## Core Features
-
-### 1. AI Knowledge Base (RAG)
-
-- Users can upload PDFs, PPTs, and documents
-- Content is split into meaningful chunks and converted into embeddings
-- Embeddings are stored in a vector database
-- When a question is asked, only relevant document sections are retrieved
-- Every answer includes:
-  - Document name
-  - Page number
-  - Context reference
-
-This ensures transparency and trust.
+- 🎯 **100% Document-Grounded**: Every answer is sourced from your materials
+- 👁️ **Vision AI**: Understands diagrams, tables, charts, and visual content
+- 🎓 **6 Learning Modes**: Adapts to your learning style (Student, Teacher, Exam, Revision, Practical, Vision)
+- 💬 **Natural Conversations**: Ask follow-up questions like talking to a tutor
+- 📊 **Smart Document Navigation**: Preview PDFs and images in-app
+- 🌓 **Beautiful UI**: Modern dark/light themes with smooth animations
 
 ---
 
-### 2. Conversational Chat Interface
+## 🔴 The Problem
 
-- Natural language question answering
-- Supports follow-up questions
-- Maintains conversational context
-- Designed to feel like a one-to-one tutoring session
+**Problem Statement (PS-12): Knowledge Discovery in Educational Documents**
 
----
+Students and professionals spend **hours** searching through PDFs, presentations, and documents to find specific information. Traditional methods are:
 
-### 3. Learning Modes
+- ⏱️ **Time-consuming**: Manual search through hundreds of pages
+- 😤 **Frustrating**: Context switching between multiple documents
+- ❌ **Inefficient**: No way to ask natural language questions
+- 🤔 **Limited**: Cannot explain diagrams or visual content
 
-InsightHub supports multiple learning modes based on user intent:
-
-| Mode | Purpose |
-|------|--------|
-| Student Mode | Step-by-step explanations |
-| Teacher Mode | Structured concept explanations |
-| Exam Mode | Short, exam-oriented answers |
-| Revision Mode | Concise summaries |
-| Practical Mode | Applied and hands-on learning |
-| Vision Tutor Mode | Visual understanding and explanation |
-
-Modes become available dynamically based on the uploaded documents.
+**Example Scenario:**
+> *"Where is the AWS spending limit mentioned in our project documentation?"*  
+> Traditional approach: Open 10+ PDFs, Ctrl+F each one, cross-reference sections...  
+> **InsightHub approach: Ask once, get instant answer with page reference.**
 
 ---
 
-### 4. Vision Tutor Mode
+## ✅ Our Solution
 
-Vision Tutor Mode allows the AI to explain what the user is viewing on screen or inside a document.
+InsightHub acts as your **intelligent study companion** that:
 
-Workflow:
-- The user selects Vision Tutor Mode
-- If documents are available, the user chooses one to analyze
-- The selected document opens inside the chatbot interface
-- The user asks questions such as:
-  - “Explain this diagram”
-  - “What does this table represent?”
-  - “Why is this step important?”
+1. **📥 Ingests** your documents (PDF, PPT, DOCX, images)
+2. **🧮 Processes** content into searchable embeddings via vector database
+3. **🔍 Retrieves** relevant context using RAG
+4. **🤖 Generates** accurate answers with source citations
+5. **👁️ Explains** visual content (diagrams, charts, tables)
+6. **💬 Maintains** conversation context for natural follow-ups
 
-The AI uses visual understanding to interpret the content and then retrieves supporting information from the knowledge base before generating an answer.
+### Key Differentiators
 
-Vision is used only to understand context; all explanations are still grounded in the document data through RAG.
-
----
-
-### 5. In-Chat Document Viewer
-
-- Uploaded documents can be opened within the chatbot workspace
-- Users can interact with the document and ask contextual questions
-- The AI references exact sections and page numbers during explanations
+| Feature | Traditional Chatbots | InsightHub-AI |
+|---------|---------------------|---------------|
+| **Knowledge Source** | Generic internet data | Your specific documents |
+| **Accuracy** | Prone to hallucinations | 100% grounded in your content |
+| **Source Citations** | None | Document name + page number |
+| **Visual Understanding** | Text only | Analyzes diagrams & visuals |
+| **Learning Modes** | One-size-fits-all | 6 adaptive modes |
+| **Conversation Context** | Limited | Full context retention |
 
 ---
 
-### 6. Hallucination Control
+## 🚀 Core Features
 
-If a user asks a question that is not covered in the uploaded documents, the system clearly responds that the information is not available.
+### 1. 📚 **Document Intelligence (RAG System)**
 
-This prevents misleading answers and maintains academic reliability.
+<details>
+<summary><b>How it works</b></summary>
+
+```mermaid
+graph LR
+    A[Upload Document] --> B[Extract Text & Images]
+    B --> C[Chunk Content]
+    C --> D[Generate Embeddings]
+    D --> E[Vector Database]
+    E --> F[Query Processing]
+    F --> G[RAG Retrieval]
+    G --> H[Contextualized Answer]
+```
+
+- **Supported Formats**: PDF, PPTX, DOCX, JPG, PNG
+- **Smart Chunking**: Preserves context and structure
+- **Vector Search**: Fast semantic similarity matching
+- **Metadata Tracking**: Document name, page numbers, sections
+
+</details>
+
+### 2. 👁️ **Vision Tutor Mode**
+
+Explain visual content with AI-powered image understanding:
+
+- 📊 **Diagram Analysis**: Understand flowcharts, architectures, processes
+- 📈 **Chart Interpretation**: Read graphs, plots, statistical visualizations
+- 🧪 **Formula Explanation**: Break down complex equations
+- 🗺️ **Screenshot Understanding**: Analyze any on-screen content
+
+**Workflow:**
+1. Select Vision Tutor Mode
+2. Choose/upload document with diagrams
+3. Ask: *"Explain this diagram"* or *"What does this chart show?"*
+4. Get detailed, contextual explanation
+
+### 3. 🎓 **6 Adaptive Learning Modes**
+
+Each mode tailors responses to your learning objective:
+
+| Mode | Icon | Purpose | Output Style |
+|------|------|---------|--------------|
+| **Student** | 🎓 | Step-by-step learning | Detailed explanations with examples |
+| **Teacher** | 📖 | Lesson planning | Structured content with teaching points |
+| **Exam** | ❓ | Test preparation | Practice questions + exam tips |
+| **Revision** | 🔁 | Quick review | Concise summaries + key points |
+| **Practical** | 🔧 | Hands-on learning | Exercises + real-world applications |
+| **Vision** | 👁️ | Visual understanding | Diagram explanations + visual context |
+
+### 4. 💬 **Conversational Chat Interface**
+
+- **Natural Language**: Ask questions like talking to a tutor
+- **Follow-up Support**: Build on previous answers
+- **Quick Actions**: 
+  - 🔄 Explain again (simpler)
+  - 💡 Give example
+  - 📝 Generate notes
+  - ❓ Create quiz
+
+### 5. 📄 **In-App Document Viewer**
+
+- **PDF Rendering**: View PDFs with page navigation
+- **Image Preview**: Display JPG/PNG documents
+- **Zoom Controls**: 50% - 200% zoom
+- **Fullscreen Mode**: Distraction-free viewing
+- **Synchronized Context**: Questions reference visible content
+
+### 6. 🎨 **Modern UI/UX**
+
+- **Dark/Light Themes**: Comfortable viewing in any environment
+- **Smooth Animations**: Framer Motion powered interactions
+- **Responsive Design**: Works on desktop, tablet, mobile
+- **Glassmorphism**: Modern, premium aesthetic
+- **IBM Plex Sans**: Professional typography
+
+### 7. 🛡️ **Hallucination Prevention**
+
+If your question isn't covered in uploaded documents:
+> ❌ **"I cannot find information about [topic] in the uploaded materials."**
+
+No made-up answers. Ever.
 
 ---
 
-### 7. Learning Utilities
+## 🏗️ System Architecture
 
-From any AI response, users can:
-- Request a simpler explanation
-- Ask for examples
-- Generate notes
-- Create quizzes
+### High-Level Architecture
 
-These tools help reinforce understanding and revision.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        FRONTEND                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
+│  │   Document   │  │   Chat UI    │  │  Learning     │    │
+│  │   Upload     │  │  (React MD)  │  │  Modes        │    │
+│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘    │
+│         │                  │                   │             │
+│         └──────────────────┴───────────────────┘             │
+│                            │                                 │
+│                    React + Vite + Zustand                   │
+└────────────────────────────┬────────────────────────────────┘
+                             │ HTTP/REST API
+┌────────────────────────────┴────────────────────────────────┐
+│                        BACKEND                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
+│  │   Vision     │  │   Learning   │  │   Session     │    │
+│  │   Tutor      │  │   Modes      │  │   Manager     │    │
+│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘    │
+│         │                  │                   │             │
+│         └──────────────────┴───────────────────┘             │
+│                            │                                 │
+│                    FastAPI + Python                         │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────┴────────────────────────────────┐
+│                     AI/ML LAYER                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
+│  │   Gemini     │  │   Document   │  │   Vector      │    │
+│  │   2.0 Flash  │  │   Processor  │  │   Embeddings  │    │
+│  └──────────────┘  └──────────────┘  └───────────────┘    │
+│                                                             │
+│           RAG + Vision AI + Context Selection              │
+└─────────────────────────────────────────────────────────────┘
+```
 
----
+### Data Flow
 
-## User Flow
-
-1. User uploads learning documents  
-2. System indexes and stores document embeddings  
-3. Relevant learning modes become available  
-4. User asks questions or enables Vision Tutor Mode  
-5. System retrieves relevant document context  
-6. AI generates a source-linked response  
-7. User continues learning through conversation  
-
----
-
-## High-Level Architecture
-
-- User uploads documents
-- Documents are chunked with metadata
-- Embeddings are generated
-- Stored in a vector database
-- User submits a query or visual input
-- Relevant context is retrieved using RAG
-- Language model generates an answer
-- Response includes source references
-
-
----
-
-## Design Principles
-
-- Clean and professional dark theme
-- Minimal and distraction-free interface
-- Clear typography with strong readability
-- Smooth and subtle animations
-- Visual indication when Vision Tutor Mode is active
-
-The design focuses on trust, clarity, and ease of use.
+1. **Document Upload** → Document extraction → Chunking → Embedding generation → Vector storage
+2. **User Query** → Session retrieval → Vector search → Context ranking → LLM generation → Response
+3. **Vision Mode** → Screenshot capture → Image + text to Gemini Vision → Contextual explanation
 
 ---
 
-## Target Users
+## 🛠️ Technology Stack
 
-- College and university students
-- Educators and faculty
-- Self-learners
-- Exam aspirants
-- Educational institutions
+### Frontend
+
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| **React** | UI Framework | 18.3.1 |
+| **Vite** | Build Tool | 7.3.0 |
+| **TypeScript** | Type Safety | 5.8.3 |
+| **TailwindCSS** | Styling | 3.4.17 |
+| **Framer Motion** | Animations | 12.23.26 |
+| **Zustand** | State Management | 5.0.9 |
+| **React Markdown** | Markdown Rendering | 10.1.0 |
+| **React PDF** | PDF Viewer | 10.2.0 |
+| **Shadcn/ui** | Component Library | Latest |
+| **Lucide React** | Icons | 0.462.0 |
+| **html2canvas** | Screenshots | 1.4.1 |
+
+### Backend
+
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| **FastAPI** | Web Framework | Latest |
+| **Python** | Core Language | 3.11+ |
+| **Google Gemini** | LLM (Text + Vision) | 2.0 Flash |
+| **pdfplumber** | PDF Extraction | Latest |
+| **python-pptx** | PPTX Extraction | Latest |
+| **Pillow (PIL)** | Image Processing | Latest |
+| **python-dotenv** | Environment Config | Latest |
+
+### AI/ML Components
+
+- **Gemini 2.0 Flash**: Multi-modal LLM (text + vision)
+- **Embeddings**: Vector representations for semantic search
+- **RAG Pipeline**: Context retrieval + generation
+- **Session Management**: Conversation state tracking
 
 ---
 
-## Why InsightHub Stands Out
+## ⚡ Quick Start
 
-- Answers are based strictly on user documents
-- Uses Retrieval-Augmented Generation for accuracy
-- Provides clear source references
-- Supports visual explanation of content
-- Adapts learning style through multiple modes
-- Prevents hallucinated responses
+### Prerequisites
+
+- **Node.js** 18+ and npm/bun
+- **Python** 3.11+
+- **Google Gemini API Key** ([Get it here](https://aistudio.google.com/apikey))
+
+### Installation
+
+#### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/InsightHub-AI.git
+cd InsightHub-AI
+```
+
+#### 2. Backend Setup
+
+```bash
+cd Backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file
+echo "GEMINI_API_KEY=your_api_key_here" > .env
+
+# Run server
+fastapi dev app.py
+```
+
+Backend runs on: `http://localhost:8000`
+
+#### 3. Frontend Setup
+
+```bash
+cd ../Frontend
+
+# Install dependencies
+npm install
+# or
+bun install
+
+# Create .env file (optional)
+echo "VITE_API_BASE_URL=http://localhost:8000" > .env
+
+# Run development server
+npm run dev
+# or
+bun run dev
+```
+
+Frontend runs on: `http://localhost:5173`
+
+### 🎉 You're Ready!
+
+Open `http://localhost:5173` in your browser and start learning!
 
 ---
 
-## Future Enhancements
+## 👤 User Workflow
 
-- Voice-based interaction
-- Classroom and LMS integration
-- Personalized learning analytics
-- Offline deployment for campus environments
-- Real-time collaborative learning support
+```mermaid
+graph TD
+    A[Open InsightHub] --> B{Documents Uploaded?}
+    B -->|No| C[Upload PDF/PPT/Images]
+    B -->|Yes| D[Select Learning Mode]
+    C --> E[System Indexes Documents]
+    E --> D
+    D --> F{Mode Type?}
+    F -->|Chat Modes| G[Ask Questions]
+    F -->|Vision Mode| H[Analyze Visuals]
+    G --> I[Get Contextual Answers]
+    H --> I
+    I --> J[Use Quick Actions]
+    J --> K[Generate Notes/Quiz/Examples]
+    K --> L[Continue Learning]
+    L --> G
+```
+
+### Step-by-Step
+
+1. **📁 Upload Documents**: Drag & drop PDFs, presentations, or images
+2. **⚡ Auto-Processing**: System extracts, chunks, and indexes content
+3. **🎯 Choose Mode**: Select learning mode based on your goal
+4. **💬 Ask Questions**: Natural language queries about your materials
+5. **📖 Get Answers**: Contextual responses with source citations
+6. **🔄 Iterate**: Follow-up questions, examples, notes, quizzes
+7. **👁️ Vision Mode**: Analyze diagrams and visual content
 
 ---
 
-## Conclusion
+## 🎓 Learning Modes
 
-InsightHub is not just a chatbot.  
-It is a complete educational ecosystem that combines document intelligence, visual understanding, and conversational learning.
+<details open>
+<summary><b>Click to expand mode details</b></summary>
 
-The platform is designed to make learning more accessible, accurate, and interactive while staying fully aligned with the goals of PS-12.
+### 🎓 Student Mode
+**Purpose**: Step-by-step concept learning  
+**Best For**: First-time learners, complex topics  
+**Output**: Detailed explanations with examples and breakdowns
 
+**Example:**
+> **Q**: "Explain React hooks"  
+> **A**: Comprehensive explanation with useState/useEffect examples, analogies, and practice scenarios
+
+---
+
+### 📖 Teacher Mode
+**Purpose**: Creating educational content  
+**Best For**: Educators, lesson planning  
+**Output**: Structured teaching points, key concepts, discussion questions
+
+**Example:**
+> **Q**: "Create a lesson plan for database normalization"  
+> **A**: Learning objectives, key points, practical examples, assessment questions
+
+---
+
+### ❓ Exam Mode
+**Purpose**: Test preparation and practice  
+**Best For**: Students preparing for exams  
+**Output**: Practice questions, exam tips, quick recall points
+
+**Example:**
+> **Q**: "Generate questions on API design"  
+> **A**: Multiple MCQs, short answer questions with mark schemes
+
+---
+
+### 🔁 Revision Mode
+**Purpose**: Quick review before exams  
+**Best For**: Last-minute revision, summarization  
+**Output**: Concise summaries, bullet points, key formulas
+
+**Example:**
+> **Q**: "Summarize sorting algorithms"  
+> **A**: Quick comparison table, time complexities, use cases
+
+---
+
+### 🔧 Practical Mode
+**Purpose**: Hands-on application  
+**Best For**: Developers, project-based learning  
+**Output**: Code examples, exercises, real-world scenarios
+
+**Example:**
+> **Q**: "How to implement JWT authentication?"  
+> **A**: Step-by-step code, security considerations, testing approach
+
+---
+
+### 👁️ Vision Tutor Mode
+**Purpose**: Visual content explanation  
+**Best For**: Diagrams, charts, screenshots  
+**Output**: Detailed visual analysis with context
+
+**Example:**
+> **Q**: "Explain this system architecture diagram"  
+> **A**: Component breakdown, data flow, relationships, design decisions
+
+</details>
+
+---
+
+## 💼 Practical Use Cases
+
+### 👨‍🎓 For Students
+
+- **Exam Preparation**: Upload lecture slides → Generate practice questions
+- **Concept Clarity**: Ask follow-up questions on confusing topics
+- **Note Generation**: Convert lengthy PDFs into concise study notes
+- **Visual Learning**: Understand complex diagrams and flowcharts
+
+### 👩‍🏫 For Educators
+
+- **Lesson Planning**: Extract key teaching points from textbooks
+- **Quiz Creation**: Auto-generate assessment questions
+- **Content Summarization**: Create student-friendly summaries
+- **Visual Aids**: Explain diagrams to prepare teaching materials
+
+### 👨‍💻 For Professionals
+
+- **Documentation Search**: "What's our API rate limit policy?"
+- **Onboarding**: New employees learn from company docs
+- **Research**: Extract insights from technical papers
+- **Compliance**: Quick reference to policy documents
+
+### 🏢 For Organizations
+
+- **Knowledge Base**: Centralized document Q&A
+- **Training**: Interactive learning from company materials
+- **Support**: Self-service documentation assistance
+- **Research**: Academic paper analysis and summarization
+
+---
+
+## 🎨 Design Philosophy
+
+### Core Principles
+
+1. **🎯 Clarity Over Complexity**: Clean, intuitive interface
+2. **⚡ Speed Matters**: Fast responses, smooth interactions
+3. **🌓 Comfort First**: Dark/light themes for extended use
+4. **✨ Delightful Animations**: Subtle, purposeful micro-interactions
+5. **📱 Responsive**: Works seamlessly across devices
+6. **♿ Accessible**: WCAG compliant, keyboard navigation
+
+### Visual Language
+
+- **Typography**: IBM Plex Sans (professional, readable)
+- **Color System**: Semantic colors with dark mode support
+- **Glassmorphism**: Modern, premium aesthetic
+- **Spacing**: 8px grid system for consistency
+- **Animations**: Framer Motion for fluid transitions
+
+### Trust Indicators
+
+- ✅ Source citations on every answer
+- 📄 Document name + page number references
+- 🚫 Clear "information not found" messages
+- 🔍 Transparent retrieval process
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Completed (v1.0)
+
+- [x] RAG-based Q&A system
+- [x] Vision Tutor Mode
+- [x] 6 Learning Modes
+- [x] PDF/Image document viewer
+- [x] Dark/Light themes
+- [x] Source citations
+- [x] Conversation context
+
+### 🚧 In Progress (v1.1)
+
+- [ ] Voice-based interaction (speech-to-text)
+- [ ] TTS (text-to-speech) for answers
+- [ ] Multi-language support
+- [ ] Export conversations as PDF
+
+### 🔮 Planned (v2.0)
+
+- [ ] Collaborative learning (multi-user sessions)
+- [ ] Learning analytics dashboard
+- [ ] Plugin system for custom modes
+- [ ] Mobile app (React Native)
+- [ ] LMS integration (Moodle, Canvas)
+- [ ] Offline mode (local LLM)
+- [ ] Video content understanding
+- [ ] Browser extension
+
+### 💡 Future Ideas
+
+- Classroom mode for teachers
+- Gamification (badges, streaks)
+- Peer learning recommendations
+- Custom knowledge graph visualization
+- Integration with note-taking apps
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+### Ways to Contribute
+
+- 🐛 **Report Bugs**: [Open an issue](https://github.com/yourusername/InsightHub-AI/issues)
+- 💡 **Suggest Features**: Share your ideas
+- 📚 **Improve Docs**: Fix typos, add examples
+- 🔧 **Submit PRs**: Bug fixes, new features
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Run tests (when available)
+5. Commit: `git commit -m 'Add amazing feature'`
+6. Push: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+### Code Style
+
+- **Frontend**: ESLint + Prettier config
+- **Backend**: Black formatter + type hints
+- **Commits**: Conventional Commits format
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini** for powerful multi-modal AI
+- **Vercel** for shadcn/ui components
+- **FastAPI** for excellent Python web framework
+- **React** ecosystem for amazing tools
+- Open source community for inspiration
+
+---
+
+## 📞 Support & Contact
+
+- 📧 **Email**: support@insighthub-ai.com
+- 🐦 **Twitter**: [@InsightHubAI](https://twitter.com/insighthubai)
+- 💬 **Discord**: [Join our community](https://discord.gg/insighthub)
+- 📖 **Docs**: [docs.insighthub-ai.com](https://docs.insighthub-ai.com)
+
+---
+
+<div align="center">
+
+### ⭐ Star this repo if you find it helpful!
+
+**Made with ❤️ by the InsightHub-AI Team**
+
+[Report Bug](https://github.com/yourusername/InsightHub-AI/issues) · [Request Feature](https://github.com/yourusername/InsightHub-AI/issues) · [Documentation](https://docs.insighthub-ai.com)
+
+</div>

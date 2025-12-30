@@ -41,6 +41,12 @@ export const VisionViewer = () => {
   const utterRef = useRef(null);
 
   if (!activeDocument) return null;
+  console.log("VisionViewer Render:", {
+    type: activeDocument.type,
+    file: activeDocument.file,
+    hasFile: !!activeDocument.file,
+    isImage: activeDocument.type === 'image'
+  });
 
   const totalPages = Math.max(1, Number(activeDocument.pageCount || 1));
 
@@ -58,14 +64,14 @@ export const VisionViewer = () => {
         recognitionRef.current.onend = null;
         recognitionRef.current.stop();
       }
-    } catch {}
+    } catch { }
     recognitionRef.current = null;
   };
 
   const stopSpeaking = () => {
     try {
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    } catch {}
+    } catch { }
     utterRef.current = null;
   };
 
@@ -186,7 +192,7 @@ export const VisionViewer = () => {
     // exit browser fullscreen if active
     try {
       if (document.fullscreenElement) document.exitFullscreen();
-    } catch {}
+    } catch { }
 
     // Keep the active document so the main layout (sidebar/chat + document viewer) stays visible.
     setVisionActive(false);
@@ -250,8 +256,8 @@ export const VisionViewer = () => {
       tabIndex={-1}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b border-border bg-card gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-glow-vision/10 border border-glow-vision/30">
             <div className="w-2 h-2 rounded-full bg-glow-vision animate-pulse" />
             <span className="text-sm font-medium text-glow-vision">
@@ -319,7 +325,7 @@ export const VisionViewer = () => {
               }}
               className="w-full flex justify-center"
             >
-              {activeDocument?.type === "pdf" && activeDocument?.file ? (
+              {activeDocument?.type === 'pdf' && activeDocument?.file ? (
                 <div className="w-full flex justify-center">
                   <div key={pdfRenderKey}>
                     <PdfPageView
@@ -328,22 +334,29 @@ export const VisionViewer = () => {
                     />
                   </div>
                 </div>
+              ) : activeDocument?.type === 'image' && activeDocument?.file ? (
+                <div className="w-full flex justify-center">
+                  <img
+                    src={activeDocument.file}
+                    alt="Captured Content"
+                    className="max-h-full max-w-full rounded-lg shadow-md object-contain"
+                  />
+                </div>
               ) : (
                 <div className="text-center space-y-6 py-10">
                   <div className="text-8xl text-muted-foreground/30">
-                    {activeDocument?.type === "ppt"
+                    {activeDocument?.type === 'ppt'
                       ? "📊"
-                      : activeDocument?.type === "doc"
-                      ? "📝"
-                      : "📄"}
+                      : activeDocument?.type === 'doc'
+                        ? "📝"
+                        : "📄"}
                   </div>
                   <div>
                     <p className="text-2xl font-semibold text-foreground mb-2">
                       Page {currentPage}
                     </p>
-                    <p className="text-muted-foreground">
-                      Preview is available for PDFs only right now. (Vision
-                      Tutor still works.)
+                    <p className="text-muted-foreground mb-4">
+                      Preview is available for PDFs and Images only right now.
                     </p>
                   </div>
                 </div>
@@ -405,7 +418,7 @@ export const VisionViewer = () => {
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-28 right-8 w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed bottom-28 right-4 left-4 md:left-auto md:right-8 md:w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="p-4 border-b border-border bg-secondary/30">
               <div className="flex items-center gap-2">

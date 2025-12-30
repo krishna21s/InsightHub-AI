@@ -39,6 +39,10 @@ def extract_pages(filename: str, content: bytes) -> tuple[str, List[PageData]]:
         return "pptx", _extract_pptx_slides(content)
     if ext == "docx":
         return "docx", _extract_docx_chunks(content)
+    if ext in ["jpg", "jpeg", "png"]:
+        # Images are treated as single-page docs with no extracted text (for now)
+        # The Vision Tutor uses the raw file/image bytes, not the text.
+        return "image", [PageData(index=0, text="")]
 
     raise DocumentExtractionError(f"Unsupported file type: .{ext or '?'}")
 
