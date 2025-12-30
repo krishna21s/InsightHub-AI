@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { GraduationCap, BookOpen, FileQuestion, RotateCcw, Wrench, Eye } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getOrCreateSessionId } from '@/lib/visionApi';
-import { fetchChatModeSummaries } from '@/lib/modesApi';
 
 const modes = [
     {
@@ -137,18 +136,8 @@ export const LearningModes = () => {
             console.log('Mode processing result:', data);
             setModeResults(data);
 
-            // Also pull chat-mode summaries for the current session (non-vision modes only)
-            let chatSummariesText = '';
-            try {
-                const chatSummaries = await fetchChatModeSummaries({ sessionId });
-                chatSummariesText = formatChatModeSummaries(chatSummaries);
-            } catch (chatErr) {
-                console.error('Chat-mode summary error:', chatErr);
-                chatSummariesText = `\nChat summaries unavailable: ${chatErr.message}`;
-            }
-
             // Add AI response message with the results
-            const resultMessage = formatModeResults(data, modeId) + chatSummariesText;
+            const resultMessage = formatModeResults(data, modeId);
             addMessage({
                 id: `msg-${Date.now() + 1}`,
                 role: 'assistant',
@@ -220,19 +209,6 @@ export const LearningModes = () => {
         });
 
         return message;
-    };
-
-    const formatChatModeSummaries = (chatData) => {
-        if (!chatData || !chatData.summaries || chatData.summaries.length === 0) {
-            return '';
-        }
-
-        let block = '**Chat Mode Summaries**\n\n';
-        chatData.summaries.forEach((s) => {
-            const bullets = (s.bullets || []).join('\n');
-            block += `• ${s.filename} (Pages: ${s.page_count})\n${bullets}\n\n`;
-        });
-        return block;
     };
 
     const handleModeClick = (mode) => {

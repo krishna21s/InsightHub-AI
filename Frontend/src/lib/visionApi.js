@@ -13,8 +13,7 @@ export function getOrCreateSessionId() {
     localStorage.removeItem(key);
   }
 
-  let sid =
-    typeof sessionStorage !== "undefined" ? sessionStorage.getItem(key) : null;
+  let sid = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(key) : null;
   if (!sid) {
     sid =
       crypto?.randomUUID?.() ||

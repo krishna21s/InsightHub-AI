@@ -57,7 +57,7 @@ async def process_mode(
     - Detects and analyzes images/diagrams using Vision Tutor
     - Generates mode-specific explanations
     """
-    if mode not in {"student", "teacher", "exam", "revision", "practical"}:
+    if mode not in {"student", "teacher", "exam", "revision"}:
         raise HTTPException(status_code=400, detail="Unsupported mode")
 
     if not session_id or not session_id.strip():
@@ -120,7 +120,7 @@ async def process_mode_with_vision(
     Process mode with vision analysis for images and diagrams.
     This endpoint receives the actual file content to extract images.
     """
-    if mode not in {"student", "teacher", "exam", "revision", "practical"}:
+    if mode not in {"student", "teacher", "exam", "revision"}:
         raise HTTPException(status_code=400, detail="Unsupported mode")
 
     if not files:
@@ -322,45 +322,33 @@ async def ask_mode_question(
     hits.sort(key=lambda h: h["score"], reverse=True)
     top_hits = hits[:3]
 
-    # Build a concise context blob for the LLM (trim to avoid huge prompts)
-    context_chunks = []
+    answers = []
     for h in top_hits:
-        prefix = f"[{h['filename']} p{h['page_index'] + 1}] "
-        context_chunks.append(prefix + h["snippet"])
-    context_blob = "\n\n".join(context_chunks)[:2400]
-
-    try:
-        llm = ask_llm_text(
-            query=(
-                f"Question: {question.strip()}\n\n"
-                "Use only the provided document snippets to answer clearly.\n"
-                f"Context:\n{context_blob}"
-            ),
-            system_hint=(
-                "You are a helpful tutor. Stay grounded to the provided document snippets. "
-                "Answer concisely in 3-6 bullets or short paragraphs."
-            ),
+        bullets = _to_bullets(h["snippet"], max_items=2)
+        answers.append(
+            {
+                "page_index": h["page_index"],
+                "filename": h["filename"],
+                "bullets": bullets,
+            }
         )
-        llm_answer = llm.get("answer", "").strip()
-    except LLMTextError as e:
-        llm_answer = f"LLM unavailable; showing top snippets instead. Error: {e}"
 
     return {
         "session_id": session_id,
         "mode": mode,
-        "answer": llm_answer,
+        "answer": answers,
         "hits": top_hits,
     }
 
 
-@router.post("/chat-mode")
-async def chat_mode(
+@router.post("/summarize")
+async def summarize_documents(
     session_id: str = Form(...),
     doc_id: Optional[str] = Form(None),
     max_items: int = Form(6),
 ):
     """
-    Chat-style summary endpoint for uploaded documents.
+    Summarize uploaded documents into short, easy bullet points.
 
     - Uses only extracted text stored in the session
     - Returns bullets per document (no paragraphs)
@@ -411,11 +399,7 @@ def _overlap_score(q_tokens: List[str], doc_tokens: List[str]) -> int:
 def _to_bullets(text: str, max_items: int = 2) -> List[str]:
     """Split text into very short bullet points for readability (no trailing ellipsis)."""
     flat = " ".join(text.split())
-    parts = [
-        p.strip()
-        for p in flat.replace("?", ".").replace("!", ".").split(".")
-        if p.strip()
-    ]
+    parts = [p.strip() for p in flat.replace("?", ".").replace("!", ".").split(".") if p.strip()]
     bullets: List[str] = []
 
     def add_chunk(chunk: str):
