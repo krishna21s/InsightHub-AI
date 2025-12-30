@@ -8,13 +8,11 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.1.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 **[Features](#-core-features)** • **[Demo](#-live-demo)** • **[Quick Start](#-quick-start)** • **[Architecture](#-system-architecture)** • **[Documentation](#-documentation)**
 
 ---
-
+  
 </div>
 
 ## 📖 Table of Contents
@@ -187,36 +185,36 @@ No made-up answers. Ever.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        FRONTEND                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
-│  │   Document   │  │   Chat UI    │  │  Learning     │    │
-│  │   Upload     │  │  (React MD)  │  │  Modes        │    │
-│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘    │
-│         │                  │                   │             │
-│         └──────────────────┴───────────────────┘             │
-│                            │                                 │
-│                    React + Vite + Zustand                   │
+│  ┌──────────────┐   ┌──────────────┐  ┌───────────────┐     │
+│  │   Document   │   │   Chat UI    │  │  Learning     │     │
+│  │   Upload     │   │  (React MD)  │  │  Modes        │     │
+│  └──────┬───────┘   └──────┬───────┘  └───────┬───────┘     │
+│         │                  │                   │            │
+│         └──────────────────┴───────────────────┘            │
+│                            │                                │
+│                  React + Vite + Zustand                     │
 └────────────────────────────┬────────────────────────────────┘
                              │ HTTP/REST API
 ┌────────────────────────────┴────────────────────────────────┐
 │                        BACKEND                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
-│  │   Vision     │  │   Learning   │  │   Session     │    │
-│  │   Tutor      │  │   Modes      │  │   Manager     │    │
-│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘    │
-│         │                  │                   │             │
-│         └──────────────────┴───────────────────┘             │
-│                            │                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐      │
+│  │   Vision     │  │   Learning   │  │   Session     │      │
+│  │   Tutor      │  │   Modes      │  │   Manager     │      │
+│  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘      │
+│         │                  │                   │            │
+│         └──────────────────┴───────────────────┘            │
+│                            │                                │
 │                    FastAPI + Python                         │
 └────────────────────────────┬────────────────────────────────┘
                              │
 ┌────────────────────────────┴────────────────────────────────┐
 │                     AI/ML LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐    │
-│  │   Gemini     │  │   Document   │  │   Vector      │    │
-│  │   2.0 Flash  │  │   Processor  │  │   Embeddings  │    │
-│  └──────────────┘  └──────────────┘  └───────────────┘    │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐      │
+│  │    Qwen      │  │   Document   │  │   Vector      │      │
+│  │   2.5 VL     │  │   Processor  │  │   Embeddings  │      │
+│  └──────────────┘  └──────────────┘  └───────────────┘      │
 │                                                             │
-│           RAG + Vision AI + Context Selection              │
+│           RAG + Vision AI + Context Selection               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -252,7 +250,7 @@ No made-up answers. Ever.
 |------------|---------|---------|
 | **FastAPI** | Web Framework | Latest |
 | **Python** | Core Language | 3.11+ |
-| **Google Gemini** | LLM (Text + Vision) | 2.0 Flash |
+| **Qwen 2.5 VL** | LLM (Text + Vision) | 2.0 Flash |
 | **pdfplumber** | PDF Extraction | Latest |
 | **python-pptx** | PPTX Extraction | Latest |
 | **Pillow (PIL)** | Image Processing | Latest |
@@ -260,7 +258,7 @@ No made-up answers. Ever.
 
 ### AI/ML Components
 
-- **Gemini 2.0 Flash**: Multi-modal LLM (text + vision)
+- **Qwen 2.5 VL**: Multi-modal LLM (text + vision)
 - **Embeddings**: Vector representations for semantic search
 - **RAG Pipeline**: Context retrieval + generation
 - **Session Management**: Conversation state tracking
@@ -273,7 +271,7 @@ No made-up answers. Ever.
 
 - **Node.js** 18+ and npm/bun
 - **Python** 3.11+
-- **Google Gemini API Key** ([Get it here](https://aistudio.google.com/apikey))
+- **Qwen 2.5 VL API Key** ([Get it here](https://aistudio.google.com/apikey))
 
 ### Installation
 
@@ -302,7 +300,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Create .env file
-echo "GEMINI_API_KEY=your_api_key_here" > .env
+echo "QWEN_API_KEY=your_api_key_here" > .env
 
 # Run server
 fastapi dev app.py
@@ -458,13 +456,6 @@ graph TD
 - **Content Summarization**: Create student-friendly summaries
 - **Visual Aids**: Explain diagrams to prepare teaching materials
 
-### 👨‍💻 For Professionals
-
-- **Documentation Search**: "What's our API rate limit policy?"
-- **Onboarding**: New employees learn from company docs
-- **Research**: Extract insights from technical papers
-- **Compliance**: Quick reference to policy documents
-
 ### 🏢 For Organizations
 
 - **Knowledge Base**: Centralized document Q&A
@@ -513,13 +504,8 @@ graph TD
 - [x] Dark/Light themes
 - [x] Source citations
 - [x] Conversation context
-
-### 🚧 In Progress (v1.1)
-
-- [ ] Voice-based interaction (speech-to-text)
-- [ ] TTS (text-to-speech) for answers
-- [ ] Multi-language support
-- [ ] Export conversations as PDF
+- [x] Voice-based interaction (speech-to-text)
+- [x] TTS (text-to-speech) for answers 
 
 ### 🔮 Planned (v2.0)
 
@@ -531,6 +517,8 @@ graph TD
 - [ ] Offline mode (local LLM)
 - [ ] Video content understanding
 - [ ] Browser extension
+- [ ] Export conversations as PDF
+- [ ] Multi-language support
 
 ### 💡 Future Ideas
 
@@ -563,36 +551,12 @@ We welcome contributions! Here's how you can help:
 6. Push: `git push origin feature/amazing-feature`
 7. Open a Pull Request
 
-### Code Style
-
-- **Frontend**: ESLint + Prettier config
-- **Backend**: Black formatter + type hints
-- **Commits**: Conventional Commits format
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
-- **Google Gemini** for powerful multi-modal AI
-- **Vercel** for shadcn/ui components
+- **Qwen 2.5 VL** for powerful multi-modal AI
 - **FastAPI** for excellent Python web framework
 - **React** ecosystem for amazing tools
 - Open source community for inspiration
-
----
-
-## 📞 Support & Contact
-
-- 📧 **Email**: support@insighthub-ai.com
-- 🐦 **Twitter**: [@InsightHubAI](https://twitter.com/insighthubai)
-- 💬 **Discord**: [Join our community](https://discord.gg/insighthub)
-- 📖 **Docs**: [docs.insighthub-ai.com](https://docs.insighthub-ai.com)
 
 ---
 
@@ -602,6 +566,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Made with ❤️ by the InsightHub-AI Team**
 
-[Report Bug](https://github.com/yourusername/InsightHub-AI/issues) · [Request Feature](https://github.com/yourusername/InsightHub-AI/issues) · [Documentation](https://docs.insighthub-ai.com)
+[Report Bug](https://github.com/yourusername/InsightHub-AI/issues) · [Request Feature](https://github.com/yourusername/InsightHub-AI/issues)
 
 </div>
